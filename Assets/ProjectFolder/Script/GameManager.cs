@@ -7,7 +7,7 @@ using UnityEngine;
 /// </summary>
 public class FieldInfo
 {
-    public int floorNum　= 0;//床の状態を表す。 0:何もなし 10:カベ
+    public int floorNum = 0;//床の状態を表す。 0:何もなし 10:カベ
     //↓※オブジェクトが各床に対して必ず1つしか存在しない場合のみ使用 複数ある場合はオブジェクトに場所情報を持たせる形で
     //public int objectNum;//存在するオブジェクト 
     
@@ -23,9 +23,14 @@ public class ObjectBase
 }
 public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 {
-    private int _width = 20;
-    private int _height = 20;
-    //じゃぐ配列にするか検討
+    private int _width = 10;
+    private int _height = 10;
+	public GameObject _blockParent;
+	public GameObject _playerPrefab;
+	public GameObject _blockPrefab;
+	GameObject _playerObj;
+
+	//じゃぐ配列にするか検討
     FieldInfo[,] _field;
     ObjectBase _player = new ObjectBase();
     void Awake()
