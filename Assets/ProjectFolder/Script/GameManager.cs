@@ -34,7 +34,8 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 	//じゃぐ配列にするか検討
     FieldInfo[,] _field;
     ObjectBase _player = new ObjectBase();
-    
+	TouchGesture _playerMoveDirection;
+	TouchGesture _playerMoveBuffer;
 
     //今アニメーション中か
     private bool isAnimated = false;
@@ -136,10 +137,15 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
             //PlayerMove(gesture);
             
             //Animated
-            if (AnimationStartRequest())
-            {
-                PlayerMoveAnimated(gesture);
-            }
+            //if (AnimationStartRequest())
+            //{
+             //   PlayerMoveAnimated(gesture);
+            //}
+
+			//Normal
+			if(gesture!=TouchGesture.None)
+			_playerMoveDirection = gesture;
+//			PlayerMoveCanCurve(gesture);
         }
     }
 
@@ -237,6 +243,49 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 
         StartCoroutine(PlayerMoveAnimated(_player.pos, moveDir,1));
     }
+	void PlayerMoveCanCurve(TouchGesture gesture)
+	{
+
+		Vector2Int moveDir = new Vector2Int(0, 0);
+		switch (gesture)
+		{
+		case TouchGesture.Left:
+			moveDir.x = -1;
+			break;
+		case TouchGesture.Up:
+			moveDir.y = -1;
+			break;
+		case TouchGesture.Right:
+			moveDir.x = 1;
+			break;
+		case TouchGesture.Down:
+			moveDir.y = 1;
+			break;
+		}
+
+
+		PlayerMoveCanCurve(_player.pos, moveDir);
+	}
+	void PlayerMoveCanCurve(Vector2Int pos, Vector2Int move)
+	{
+		if (move.sqrMagnitude != 0)
+		{
+			Vector2Int ind = pos;
+			if (FieldIndexCheck(ind, move))
+			{//次にいけるか
+				ind = ind + move;
+				if (_field[ind.x, ind.y].isUnlock)
+				{
+					//ブロック以外
+					//  Debug.Log("" + ind.x + "," + ind.y);
+					_player.pos = ind;
+					Feeding(ind);
+				}
+			}
+
+		}
+			
+	}
     IEnumerator PlayerMoveAnimated(Vector2Int pos, Vector2Int move,int waitFrame)
     {
         if (move.sqrMagnitude != 0)
@@ -361,7 +410,7 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 	{
 	    if(Random.Range(0,100) == 0)FeedSpawner();
 
-        DebugField();
-
+       // DebugField();
+		if(Time.frameCount%4== 0)PlayerMoveCanCurve (_playerMoveDirection);
 	}
 }
