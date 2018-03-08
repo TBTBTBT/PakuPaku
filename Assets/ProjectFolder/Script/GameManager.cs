@@ -24,6 +24,66 @@ public class ObjectBase
     //座標
     public Vector2Int pos;
 }
+
+public class Player : ObjectBase
+{
+    public int _playerMoveTime = 0;
+    public int _playerMoveSpeed = 5;//0が最速
+    public bool _isMoving = false;
+    public void PlayerMove(TouchGesture gesture)
+    {
+        Vector2Int moveDir = new Vector2Int(0, 0);
+        switch (gesture)
+        {
+            case TouchGesture.Left:
+                moveDir.x = -1;
+                break;
+            case TouchGesture.Up:
+                moveDir.y = -1;
+                break;
+            case TouchGesture.Right:
+                moveDir.x = 1;
+                break;
+            case TouchGesture.Down:
+                moveDir.y = 1;
+                break;
+        }
+        if (_isMoving)
+        {
+            _playerMoveTime++;
+        }
+        if (_playerMoveTime % _playerMoveSpeed == 0)
+            pos = PlayerMove(pos, moveDir);
+    }
+    Vector2Int PlayerMove(Vector2Int pos, Vector2Int move)
+    {
+        GameManager game = GameManager.Instance;
+        if (move.sqrMagnitude != 0)
+        {
+            if (game.FieldIndexCheck(pos, move))
+            {
+                Vector2Int ind = pos + move;
+                if (game.IsFieldPassable(ind))
+                {
+                    _isMoving = true;
+                    game.Feeding(ind);
+                    //ブロック以外
+                    // Debug.Log("" + ind.x + "," + ind.y);
+                    //return PlayerMove(ind, move);
+                    return ind;
+                }
+            }
+
+            //{//通行不能ブロック
+            //     return pos;
+            //}
+        }
+
+        _isMoving = false;
+        _playerMoveTime = 0;
+        return pos;
+    }
+}
 public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 {
     [System.NonSerialized]
@@ -33,12 +93,13 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 	
 	//じゃぐ配列にするか検討
     FieldInfo[,] _field;
-    ObjectBase _player = new ObjectBase();
+    Player _player = new Player();
 	TouchGesture _playerMoveDirection;
 	TouchGesture _playerMoveBuffer;
 
+    
     //今アニメーション中か
-    private bool isAnimated = false;
+    
     void Awake()
     {
         
@@ -159,7 +220,7 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
         _field[x, y].floorNum = 1;
     }
 
-    void Feeding(Vector2Int pos)
+    public void Feeding(Vector2Int pos)
     {
         if (_field[pos.x, pos.y].floorNum > 0)
         {
@@ -169,9 +230,69 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
     }
 
     #endregion
+
+
+    /*
+    public bool AnimationStartRequest()
+    {
+        if (!isAnimated)
+        {
+            isAnimated = true;
+            return true;
+        }
+
+        return false;
+    }
+    
+   public void AnimationEndRequest()
+    {
+        isAnimated = false;
+    }*/
+
+    public int FieldState(int x,int y)
+    {
+        return _field[x, y].floorNum;
+    }
+
+    public bool IsFieldPassable(Vector2Int pos)
+    {
+        return IsFieldPassable(pos.x, pos.y);
+    }
+    public bool IsFieldPassable(int x, int y)
+    {
+        if(FieldIndexCheck(x,y))
+        return _field[x, y].isUnlock;
+        return false;
+    }
+
+    #region  旧プレイヤー関係
+#if false
+    Vector2Int PlayerMove(Vector2Int pos, Vector2Int move)
+    {
+        if (move.sqrMagnitude != 0)
+        {
+            if (FieldIndexCheck(pos, move))
+            {
+                Vector2Int ind = pos + move;
+                if (_field[ind.x, ind.y].isUnlock)
+                {
+                    //ブロック以外
+                    Debug.Log("" + ind.x + "," + ind.y);
+                    return PlayerMove(ind, move);
+
+                }
+            }
+
+            //{//通行不能ブロック
+            //     return pos;
+            //}
+        }
+
+        return pos;
+    }
     void PlayerMove(TouchGesture gesture)
     {
-        Vector2Int moveDir = new Vector2Int(0,0);
+        Vector2Int moveDir = new Vector2Int(0, 0);
         switch (gesture)
         {
             case TouchGesture.Left:
@@ -188,38 +309,7 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
                 break;
         }
 
-        _player.pos =  PlayerMove(_player.pos, moveDir);
-    }
-
-    public bool AnimationStartRequest()
-    {
-        if (!isAnimated)
-        {
-            isAnimated = true;
-            return true;
-        }
-
-        return false;
-    }
-    
-   public void AnimationEndRequest()
-    {
-        isAnimated = false;
-    }
-    public int FieldState(int x,int y)
-    {
-        return _field[x, y].floorNum;
-    }
-
-    public bool IsFieldPassable(Vector2Int pos)
-    {
-        return IsFieldPassable(pos.x, pos.y);
-    }
-    public bool IsFieldPassable(int x, int y)
-    {
-        if(FieldIndexCheck(x,y))
-        return _field[x, y].isUnlock;
-        return false;
+        _player.pos = PlayerMove(_player.pos, moveDir);
     }
     void PlayerMoveAnimated(TouchGesture gesture)
     {
@@ -241,52 +331,52 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
                 break;
         }
 
-        StartCoroutine(PlayerMoveAnimated(_player.pos, moveDir,1));
+        StartCoroutine(PlayerMoveAnimated(_player.pos, moveDir, 1));
     }
-	void PlayerMoveCanCurve(TouchGesture gesture)
-	{
+    void PlayerMoveCanCurve(TouchGesture gesture)
+    {
 
-		Vector2Int moveDir = new Vector2Int(0, 0);
-		switch (gesture)
-		{
-		case TouchGesture.Left:
-			moveDir.x = -1;
-			break;
-		case TouchGesture.Up:
-			moveDir.y = -1;
-			break;
-		case TouchGesture.Right:
-			moveDir.x = 1;
-			break;
-		case TouchGesture.Down:
-			moveDir.y = 1;
-			break;
-		}
+        Vector2Int moveDir = new Vector2Int(0, 0);
+        switch (gesture)
+        {
+            case TouchGesture.Left:
+                moveDir.x = -1;
+                break;
+            case TouchGesture.Up:
+                moveDir.y = -1;
+                break;
+            case TouchGesture.Right:
+                moveDir.x = 1;
+                break;
+            case TouchGesture.Down:
+                moveDir.y = 1;
+                break;
+        }
 
 
-		PlayerMoveCanCurve(_player.pos, moveDir);
-	}
-	void PlayerMoveCanCurve(Vector2Int pos, Vector2Int move)
-	{
-		if (move.sqrMagnitude != 0)
-		{
-			Vector2Int ind = pos;
-			if (FieldIndexCheck(ind, move))
-			{//次にいけるか
-				ind = ind + move;
-				if (_field[ind.x, ind.y].isUnlock)
-				{
-					//ブロック以外
-					//  Debug.Log("" + ind.x + "," + ind.y);
-					_player.pos = ind;
-					Feeding(ind);
-				}
-			}
+        PlayerMoveCanCurve(_player.pos, moveDir);
+    }
+    void PlayerMoveCanCurve(Vector2Int pos, Vector2Int move)
+    {
+        if (move.sqrMagnitude != 0)
+        {
+            Vector2Int ind = pos;
+            if (FieldIndexCheck(ind, move))
+            {//次にいけるか
+                ind = ind + move;
+                if (_field[ind.x, ind.y].isUnlock)
+                {
+                    //ブロック以外
+                    //  Debug.Log("" + ind.x + "," + ind.y);
+                    _player.pos = ind;
+                    Feeding(ind);
+                }
+            }
 
-		}
-			
-	}
-    IEnumerator PlayerMoveAnimated(Vector2Int pos, Vector2Int move,int waitFrame)
+        }
+
+    }
+    IEnumerator PlayerMoveAnimated(Vector2Int pos, Vector2Int move, int waitFrame)
     {
         if (move.sqrMagnitude != 0)
         {
@@ -297,7 +387,7 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
                 if (_field[ind.x, ind.y].isUnlock)
                 {
                     //ブロック以外
-                  //  Debug.Log("" + ind.x + "," + ind.y);
+                    //  Debug.Log("" + ind.x + "," + ind.y);
                     _player.pos = ind;
                     Feeding(ind);
                     for (int i = 0; i < waitFrame; i++)
@@ -315,6 +405,11 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 
         AnimationEndRequest();
     }
+#endif
+
+    #endregion
+
+    
     //trueなら大丈夫 falseならはみ出し
     public bool FieldIndexCheck(Vector2Int pos, Vector2Int move)
     {
@@ -341,29 +436,7 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
         }
         return true;
     }
-    Vector2Int PlayerMove(Vector2Int pos, Vector2Int move)
-    {
-        if (move.sqrMagnitude != 0)
-        {
-            if (FieldIndexCheck(pos, move))
-            {
-                Vector2Int ind = pos + move;
-                if (_field[ind.x, ind.y].isUnlock)
-                {
-                    //ブロック以外
-                    Debug.Log("" + ind.x + "," + ind.y);
-                    return PlayerMove(ind, move);
-
-                }
-            }
-
-            //{//通行不能ブロック
-           //     return pos;
-            //}
-        }
-
-        return pos;
-    }
+   
 	// Use this for initialization
     void Start()
     {
@@ -410,7 +483,7 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 	{
 	    if(Random.Range(0,100) == 0)FeedSpawner();
 
-       // DebugField();
-		if(Time.frameCount%4== 0)PlayerMoveCanCurve (_playerMoveDirection);
+        // DebugField();
+	    _player.PlayerMove(_playerMoveDirection);
 	}
 }
