@@ -105,7 +105,7 @@ public class TouchManager : SingletonMonoBehaviour<TouchManager> {
             if (cos < 0) ret = TouchGesture.Left;
             if (cos >= 0) ret = TouchGesture.Right;
         }
-        Debug.Log("" + ret);
+        //Debug.Log("" + ret);
         return ret;
     }
     void OnTouchEnd(int num)

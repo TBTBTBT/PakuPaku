@@ -29,6 +29,14 @@ public class FieldSpriteManager : MonoBehaviour
             _walls[2].SetActive(!right);
             _walls[3].SetActive(!down);
         }
+
+        if (!my)
+        {
+            for (int i = 0; i < _walls.Length; i++)
+            {
+                _walls[i].SetActive(false);
+            }
+        }
     }
 
 }

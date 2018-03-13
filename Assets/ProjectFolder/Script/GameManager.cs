@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using NUnit.Framework.Internal.Execution;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
+
 /// <summary>
 /// フィールド1マス単位に必要な情報
 /// </summary>
@@ -129,6 +131,7 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
     [System.NonSerialized]
     public int _height = 15;
 	
+
 	//じゃぐ配列にするか検討
     FieldInfo[,] _field;
     Player _player = new Player();
@@ -136,7 +139,12 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 	TouchGesture _playerMoveBuffer = TouchGesture.None;
     private int frameTimeMax = 300;//床が増えるまでの時間
 
+    [System.NonSerialized]
+    public UnityEvent OnChangeField = new UnityEvent();
+
+    private int _unlockRange = 2;
     //今アニメーション中か
+
 
     void Awake()
     {
@@ -165,12 +173,12 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
             {
                 int x = i <= _width / 2 ? i : FieldData.data.GetLength(1)-1 - (i-_width/2);
                 int y = j <= _height / 2 ? j : FieldData.data.GetLength(0) - 1 - (j - _height/2);
-                Debug.Log(y);
-                int rect = 2;
-                bool isUnlock = ((_width / 2) + rect > i && (_width / 2) - rect < i) &&
-                                ((_height / 2) + rect > j && (_height / 2) - rect < j);
+                //Debug.Log(y);
+                //int rect = 2;
+                //bool isUnlock = ((_width / 2) + rect > i && (_width / 2) - rect < i) &&
+                //                ((_height / 2) + rect > j && (_height / 2) - rect < j);
 
-                _field[i, j].isUnlock = isUnlock;
+               // _field[i, j].isUnlock = isUnlock;
                 _field[i, j].isPassable = FieldData.data[y, x] == 0;
                 //               if (i % 10 == j * 6 % 10) bnum++;
                 // bool isBlock = i % 10 == ((j+1) * 7 + 1) % 10;// && bnum!=erase;
@@ -185,6 +193,7 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
                 //}
             }
         }
+        FieldEnlarge(2);
         _player.pos = new Vector2Int(_width / 2,_height/2 + 1);
     }
     /// <summary>
@@ -316,7 +325,21 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
         return _field[x, y].isUnlock && _field[x, y].isPassable;
         return false;
     }
+    //フィールドを広げる
+    void FieldEnlarge(int r)
+    {
+        for (int i = 0; i < _width; i++)
+        {
+            for (int j = 0; j < _height; j++)
+            {
+                if (new Vector2Int(_width / 2 - i, _height / 2 - j).magnitude < r)
+                    _field[i, j].isUnlock = true;
+                else _field[i, j].isUnlock = false;
+            }
+        }
+    }
 
+   
     #region  旧プレイヤー関係
 #if false
     Vector2Int PlayerMove(Vector2Int pos, Vector2Int move)
@@ -533,6 +556,12 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 	// Update is called once per frame
 	void Update ()
 	{
+	    if (Time.frameCount % 300 == 0)
+	    {
+	        _unlockRange++;
+            FieldEnlarge(_unlockRange);
+	        OnChangeField.Invoke();
+        }
 	    if(Random.Range(0,100) == 0)FeedSpawner();
 
         // DebugField();

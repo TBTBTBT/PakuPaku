@@ -24,6 +24,7 @@ public class GameViewManager : MonoBehaviour {
         _height = (float)game._height;
         PlayerViewInit(game);
         FieldViewInit(game);
+        game.OnChangeField.AddListener(OnChangeField);
     }
 
     #region プレイヤー関係
@@ -83,7 +84,38 @@ public class GameViewManager : MonoBehaviour {
         Vector2 ret  = new Vector2(fx - _width/2, -(fy - _height / 2));
         return ret;
     }
+
+    void OnChangeField()
+    {
+        GameManager game = GameManager.Instance;
+        fieldViewUpdate(game);
+    }
 	// Update is called once per frame
+    void fieldViewUpdate(GameManager game)
+    {
+        for (int i = 0; i < game._width; i++)
+        {
+            for (int j = 0; j < game._height; j++)
+            {
+                bool my = !game.IsFieldPassable(i, j);
+                bool left = !game.IsFieldPassable(i - 1, j);
+                bool up = !game.IsFieldPassable(i, j - 1);
+                bool right = !game.IsFieldPassable(i + 1, j);
+                bool down = !game.IsFieldPassable(i, j + 1);
+                _fieldObj[i, j].GetComponent<FieldSpriteManager>().ChangeBlockState(my, left, up, right, down);
+                /*switch(game.FieldState(i, j))
+                {
+                    case 10:
+                        _fieldObj[i, j].GetComponent<FieldSpriteManager>().ChangeBlockState(1);
+                        break;
+                    default:
+                        _fieldObj[i, j].GetComponent<FieldSpriteManager>().ChangeBlockSprite(0);
+                        break;
+                }*/
+            }
+        }
+        Debug.Log("tataatataa");
+    }
     void Update()
     {
         GameManager game = GameManager.Instance;

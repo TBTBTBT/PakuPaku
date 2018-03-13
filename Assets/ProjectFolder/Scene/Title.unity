@@ -289,6 +289,11 @@ Prefab:
       propertyPath: m_Pivot.y
       value: 0.5
       objectReference: {fileID: 0}
+    - target: {fileID: 114391966562980318, guid: 2c293694cef589f43a50844c8c451d7a,
+        type: 2}
+      propertyPath: m_Text
+      value: Grave Keeper
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 2c293694cef589f43a50844c8c451d7a, type: 2}
   m_IsPrefabParent: 0
@@ -302,12 +307,12 @@ Prefab:
     - target: {fileID: 224192112047339422, guid: 448300b40db2ed94eb50b07b2ef660e3,
         type: 2}
       propertyPath: m_LocalPosition.x
-      value: 146.5
+      value: 151.5
       objectReference: {fileID: 0}
     - target: {fileID: 224192112047339422, guid: 448300b40db2ed94eb50b07b2ef660e3,
         type: 2}
       propertyPath: m_LocalPosition.y
-      value: 260
+      value: 269
       objectReference: {fileID: 0}
     - target: {fileID: 224192112047339422, guid: 448300b40db2ed94eb50b07b2ef660e3,
         type: 2}
