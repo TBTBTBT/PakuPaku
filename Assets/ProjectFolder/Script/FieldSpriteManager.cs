@@ -4,26 +4,24 @@ using UnityEngine;
 
 public class FieldSpriteManager : MonoBehaviour
 {
-    public SpriteRenderer _feedRenderer;
     public GameObject[] _walls;
-    public Sprite[] _feedSprites;
+    public Animator _road;
 	// Use this for initialization
 	void Start () {
 		
 	}
 
-    public void ChangeFeedSprite(int i)
-    {
-        if (i >= 0 && _feedSprites.Length > i)
-        {
-            _feedRenderer.sprite = _feedSprites[i];
-        }
-    }
 
+    public void ChangeRoadState(int state)
+    {
+        //_road .SetActive(true);
+
+    }
     public void ChangeBlockState(bool my,bool left,bool up,bool right,bool down)
     {
-        if (my && _walls.Length>3)
+        if (my && _walls.Length>4)
         {
+            _walls[4].SetActive(false);
             _walls[0].SetActive(!left);
             _walls[1].SetActive(!up);
             _walls[2].SetActive(!right);
@@ -35,7 +33,10 @@ public class FieldSpriteManager : MonoBehaviour
             for (int i = 0; i < _walls.Length; i++)
             {
                 _walls[i].SetActive(false);
+
+                if(i == 4) _walls[i].SetActive(true);
             }
+            //_road.gameObject.SetActive(false);
         }
     }
 

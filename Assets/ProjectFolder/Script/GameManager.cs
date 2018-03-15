@@ -26,13 +26,304 @@ public class ObjectBase
 {
     //座標
     public Vector2Int pos;
+    public Vector2Int beforePos;
 }
 
+
+public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
+{
+    [System.NonSerialized]
+    public int _width = 15;
+    [System.NonSerialized]
+    public int _height = 15;
+	
+
+	//じゃぐ配列にするか検討
+    FieldInfo[,] _field;
+    //フィールドの見た目の大きさ倍率
+    private float _extend = 1.6f;
+    private int frameTimeMax = 300;//床が増えるまでの時間
+
+    [System.NonSerialized]
+    public UnityEvent OnChangeField = new UnityEvent();
+
+    public GameObject _playerPrefab;
+
+    private int _unlockRange = 2;
+    //今アニメーション中か
+
+
+    void Awake()
+    {
+        
+        base.Awake();
+        _field = new FieldInfo[_width, _height];
+        FieldInit();
+        PlayerInit();
+    }
+
+    /// <summary>
+    /// フィールドの初期化
+    /// </summary>
+    void FieldInit()
+    {
+        for (int i = 0; i < _width; i++)
+        {
+            for (int j = 0; j < _height; j++)
+            {
+                _field[i, j] = new FieldInfo();
+            }
+        }
+        for (int i = 0; i < _width; i++)
+        {
+           // int erase = Random.Range(0, 4);
+           // int bnum = 0;
+            for (int j = 0; j < _height; j++)
+            {
+                int x = i <= _width / 2 ? i : FieldData.data.GetLength(1)-1 - (i-_width/2);
+                int y = j <= _height / 2 ? j : FieldData.data.GetLength(0) - 1 - (j - _height/2);
+                //Debug.Log(y);
+                //int rect = 2;
+                //bool isUnlock = ((_width / 2) + rect > i && (_width / 2) - rect < i) &&
+                //                ((_height / 2) + rect > j && (_height / 2) - rect < j);
+
+               // _field[i, j].isUnlock = isUnlock;
+                _field[i, j].isPassable = FieldData.data[y, x] == 0;
+                //               if (i % 10 == j * 6 % 10) bnum++;
+                // bool isBlock = i % 10 == ((j+1) * 7 + 1) % 10;// && bnum!=erase;
+                //if ((i == _width / 2 && j == _height / 2 + 1))
+                //DigoutBlock(new Vector2Int(i,j), new Vector2Int(Random.Range(0,_width), Random.Range(0, _height)), new Vector2Int(i, j), 5);
+                //(i == _width / 2 && j == _height / 2) ;
+                //_field[i, j].floorNum = isBlock ? 10 : 0;
+                //_field[i, j].isUnlock = !isBlock;
+                //if (i == _width / 2 && j == _height / 2)
+                //{
+                //    _field[i, j].floorNum = 20;
+                //}
+            }
+        }
+        FieldEnlarge(2);
+        //_player.pos = new Vector2Int(_width / 2,_height/2 + 1);
+    }
+
+    void PlayerInit()
+    {
+        GameObject.Instantiate(_playerPrefab, IndexToPosition(new Vector2Int(_width / 2,_height/2+1)), Quaternion.identity);
+    }
+    public bool CanMove(Vector2Int pos, Vector2Int move)
+    {
+        if (move.sqrMagnitude != 0)
+        {
+            Vector2Int ind = pos + move;
+            if (IsFieldPassable(ind))
+            {
+                //ブロック以外
+                // Debug.Log("" + ind.x + "," + ind.y);
+                //return PlayerMove(ind, move);
+                return true;
+            }
+
+            //{//通行不能ブロック
+            //     return pos;
+            //}
+        }
+
+        return false;
+    }
+    #region 座標変換
+
+   
+    public Vector2 IndexToPosition(Vector2Int pos)
+    {
+        float fx = (float)pos.x;
+        float fy = (float)pos.y;
+        Vector2 ret = new Vector2(fx - _width / 2,-(fy - _height / 2))*_extend;
+        return ret;
+    }
+    public Vector2Int PositionToIndex(Vector2 pos)
+    {
+        int fx = (int)((_width / 2f + pos.x/_extend));
+        int fy = (int)((_height / 2f - pos.y/_extend));
+        fx = IndexModify(fx, 0, _width - 1);
+        fy = IndexModify(fy, 0, _height - 1);
+        Vector2Int ret = new Vector2Int(fx,fy);
+        return ret;
+    }
+    //はみ出したindexを範囲内にする。
+    int IndexModify(int ind,int min,int max)
+    {
+        if (ind < min) return min;
+        if (ind > max) return max;
+        return ind;
+    }
+    #endregion
+
+    #region エサ関係
+
+    void FeedSpawner()
+    {
+        int x = Random.Range(0, _width);
+        int y = Random.Range(0, _height);
+        if (_field[x, y].isUnlock && _field[x, y].isPassable)
+        _field[x, y].floorNum = 1;
+    }
+    /*
+    public void Feeding(Vector2Int pos)
+    {
+        if (_field[pos.x, pos.y].floorNum > 0)
+        {
+            _field[pos.x, pos.y].floorNum = 0;
+            _field[pos.x, pos.y].feedSpawnTime = 0;
+        }
+    }
+    */
+#endregion
+
+
+    //床の情報
+    public int FieldState(int x,int y)
+    {
+        return _field[x, y].floorNum;
+    }
+
+#region 周辺通行可能チェック
+
+    //上下左右が通行可能
+    bool IsFieldPassableSurround(Vector2Int pos)
+    {
+        bool my = IsFieldPassable(pos);
+        bool left = IsFieldPassable(pos + new Vector2Int(-1, 0));
+        bool up = IsFieldPassable(pos + new Vector2Int(0, -1));
+        bool right = IsFieldPassable(pos + new Vector2Int(1, 0));
+        bool down = IsFieldPassable(pos + new Vector2Int(0, 1));
+        if (left || up || down || right) return true;
+        return false;
+    }
+
+#endregion
+
+#region 通行可能チェック
+    //通行可能か isUnlock isPassableがtrueなら通行可能
+    public bool IsFieldPassable(Vector2Int pos)
+    {
+        return IsFieldPassable(pos.x, pos.y);
+    }
+    public bool IsFieldPassable(int x, int y)
+    {
+        
+        if(FieldIndexCheck(x,y))
+        return _field[x, y].isUnlock && _field[x, y].isPassable;
+        return false;
+    }
+
+    
+#endregion
+
+#region このゲーム独特の挙動
+
+    //フィールドを広げる
+    void FieldEnlarge(int r)
+    {
+        for (int i = 0; i < _width; i++)
+        {
+            for (int j = 0; j < _height; j++)
+            {
+                if (new Vector2Int(_width / 2 - i, _height / 2 - j).magnitude < r)
+                    _field[i, j].isUnlock = true;
+                else _field[i, j].isUnlock = false;
+            }
+        }
+    }
+
+
+#endregion
+
+
+#region フィールド配列チェック
+    //trueなら大丈夫 falseならはみ出し
+    public bool FieldIndexCheck(Vector2Int pos, Vector2Int move)
+    {
+        Vector2Int ind = pos + move;
+        if (ind.x < 0 || ind.x >= _field.GetLength(0))
+        {
+            return false;
+        }
+        if (ind.y < 0 || ind.y >= _field.GetLength(1))
+        {
+            return false;
+        }
+        return true;
+    }
+    public bool FieldIndexCheck(int x,int y)
+    {
+        if (x < 0 || x >= _field.GetLength(0))
+        {
+            return false;
+        }
+        if (y < 0 || y >= _field.GetLength(1))
+        {
+            return false;
+        }
+        return true;
+    }
+#endregion
+    // Use this for initialization
+    void Start()
+    {
+       // EventManager.OnTouchGesture.AddListener(GetTouchGesture);
+        
+    }
+
+	void Update ()
+	{
+	    if (Time.frameCount % 300 == 0)
+	    {
+	        _unlockRange++;
+            FieldEnlarge(_unlockRange);
+	        OnChangeField.Invoke();
+        }
+	    //if(Random.Range(0,100) == 0)FeedSpawner();
+
+        // DebugField();
+	    //_player.PlayerMove(ref _playerMoveDirection,ref _playerMoveBuffer);
+	}
+
+   
+}
+
+
+
+//以下未使用参考
+
+#region 未使用
+#region 旧プレイヤー関係
+/*
 public class Player : ObjectBase
 {
     public int _playerMoveTime = 0;
-    public int _playerMoveSpeed = 5;//0が最速
+    public int _playerMoveSpeed = 20;//0が最速
     public bool _isMoving = false;
+    public float _animationTime = 0;
+    public void PlayerMoveAnimation(ref TouchGesture gesture, ref TouchGesture buffer)
+    {
+        Vector2Int moveDir = GestureToDir(gesture);
+        Vector2Int postMoveDir = GestureToDir(buffer);
+        if (_isMoving)
+        {
+            _playerMoveTime++;
+        }
+
+       // if (_playerMoveTime % _playerMoveSpeed == 0)
+        {
+            if (CanMove(pos, postMoveDir))
+            {
+                moveDir = postMoveDir;
+                gesture = buffer;
+            };
+            beforePos = pos;
+            pos = PlayerMove(pos, moveDir);
+        }
+    }
     public void PlayerMove(ref TouchGesture gesture,ref TouchGesture buffer)
     {
         Vector2Int moveDir = GestureToDir(gesture);
@@ -106,7 +397,7 @@ public class Player : ObjectBase
                 if (game.IsFieldPassable(ind))
                 {
                     _isMoving = true;
-                    game.Feeding(ind);
+                    //game.Feeding(ind);
                     //ブロック以外
                     // Debug.Log("" + ind.x + "," + ind.y);
                     //return PlayerMove(ind, move);
@@ -124,223 +415,7 @@ public class Player : ObjectBase
         return pos;
     }
 }
-public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
-{
-    [System.NonSerialized]
-    public int _width = 15;
-    [System.NonSerialized]
-    public int _height = 15;
-	
-
-	//じゃぐ配列にするか検討
-    FieldInfo[,] _field;
-    Player _player = new Player();
-	TouchGesture _playerMoveDirection = TouchGesture.None;
-	TouchGesture _playerMoveBuffer = TouchGesture.None;
-    private int frameTimeMax = 300;//床が増えるまでの時間
-
-    [System.NonSerialized]
-    public UnityEvent OnChangeField = new UnityEvent();
-
-    private int _unlockRange = 2;
-    //今アニメーション中か
-
-
-    void Awake()
-    {
-        
-        base.Awake();
-        _field = new FieldInfo[_width, _height];
-        FieldInit();
-    }
-    /// <summary>
-    /// フィールドの初期化
-    /// </summary>
-    void FieldInit()
-    {
-        for (int i = 0; i < _width; i++)
-        {
-            for (int j = 0; j < _height; j++)
-            {
-                _field[i, j] = new FieldInfo();
-            }
-        }
-        for (int i = 0; i < _width; i++)
-        {
-           // int erase = Random.Range(0, 4);
-           // int bnum = 0;
-            for (int j = 0; j < _height; j++)
-            {
-                int x = i <= _width / 2 ? i : FieldData.data.GetLength(1)-1 - (i-_width/2);
-                int y = j <= _height / 2 ? j : FieldData.data.GetLength(0) - 1 - (j - _height/2);
-                //Debug.Log(y);
-                //int rect = 2;
-                //bool isUnlock = ((_width / 2) + rect > i && (_width / 2) - rect < i) &&
-                //                ((_height / 2) + rect > j && (_height / 2) - rect < j);
-
-               // _field[i, j].isUnlock = isUnlock;
-                _field[i, j].isPassable = FieldData.data[y, x] == 0;
-                //               if (i % 10 == j * 6 % 10) bnum++;
-                // bool isBlock = i % 10 == ((j+1) * 7 + 1) % 10;// && bnum!=erase;
-                //if ((i == _width / 2 && j == _height / 2 + 1))
-                //DigoutBlock(new Vector2Int(i,j), new Vector2Int(Random.Range(0,_width), Random.Range(0, _height)), new Vector2Int(i, j), 5);
-                //(i == _width / 2 && j == _height / 2) ;
-                //_field[i, j].floorNum = isBlock ? 10 : 0;
-                //_field[i, j].isUnlock = !isBlock;
-                //if (i == _width / 2 && j == _height / 2)
-                //{
-                //    _field[i, j].floorNum = 20;
-                //}
-            }
-        }
-        FieldEnlarge(2);
-        _player.pos = new Vector2Int(_width / 2,_height/2 + 1);
-    }
-    /// <summary>
-    /// 初期化時に通行可能ブロックを作る
-    /// </summary>
-    public void DigoutBlock(Vector2Int pos, Vector2Int aim,Vector2Int first,int num)
-    {
-        Vector2Int direction = new Vector2Int(0,0);
-        if (aim.x != pos.x)
-        {
-            direction.x = (int) Mathf.Sign(aim.x - pos.x);
-        }
-        else if (aim.y!=pos.y)
-        {
-            direction.y = (int)Mathf.Sign(aim.y- pos.y);
-        }
-        
-        if (direction.magnitude > 0 && FieldIndexCheck(pos, direction)&&!IsFieldPassableSurround(pos))
-        {
-            DigoutBlock(pos+direction, aim,first,num);
-        }
-        else
-        {
-            if (num > 0)
-            {
-                if(num!=1)DigoutBlock(pos + direction, new Vector2Int(Random.Range(0, _width), Random.Range(0, _height)),first, num-1);
-                else DigoutBlock(pos + direction, first,first, num - 1);
-
-            }
-        }
-        _field[pos.x, pos.y].isPassable = true;
-        _field[pos.x, pos.y].isUnlock = true;
-    }
-    //上下左右が通行可能
-    bool IsFieldPassableSurround(Vector2Int pos)
-    {
-        bool my = IsFieldPassable(pos);
-        bool left = IsFieldPassable(pos + new Vector2Int(-1, 0));
-        bool up = IsFieldPassable(pos + new Vector2Int(0, -1));
-        bool right = IsFieldPassable(pos + new Vector2Int(1, 0));
-        bool down = IsFieldPassable(pos + new Vector2Int(0, 1));
-        if (left || up || down || right) return true;
-        return false;
-    }
-    public Vector2Int PlayerPosition()
-    {
-        return _player.pos;
-    }
-    void GetTouchGesture(int i,TouchGesture gesture)
-    {
-        if (i == 0)
-        {
-            //NonAnimated
-            //PlayerMove(gesture);
-
-            //Animated
-            //if (AnimationStartRequest())
-            //{
-            //   PlayerMoveAnimated(gesture);
-            //}
-
-            //Normal
-            if (gesture != TouchGesture.None) {
-                if (_playerMoveDirection == TouchGesture.None)
-                {//最初だけ
-                    _playerMoveDirection = gesture;
-                }
-
-                //if (_playerMoveBuffer == TouchGesture.None)
-                {//次に行く方向
-                    _playerMoveBuffer = gesture;
-                }
-            }
-//			PlayerMoveCanCurve(gesture);
-        }
-    }
-
-    #region エサ関係
-
-    void FeedSpawner()
-    {
-        int x = Random.Range(0, _width);
-        int y = Random.Range(0, _height);
-        if (_field[x, y].isUnlock && _field[x, y].isPassable)
-        _field[x, y].floorNum = 1;
-    }
-
-    public void Feeding(Vector2Int pos)
-    {
-        if (_field[pos.x, pos.y].floorNum > 0)
-        {
-            _field[pos.x, pos.y].floorNum = 0;
-            _field[pos.x, pos.y].feedSpawnTime = 0;
-        }
-    }
-
-    #endregion
-
-
-    /*
-    public bool AnimationStartRequest()
-    {
-        if (!isAnimated)
-        {
-            isAnimated = true;
-            return true;
-        }
-
-        return false;
-    }
-    
-   public void AnimationEndRequest()
-    {
-        isAnimated = false;
-    }*/
-
-    public int FieldState(int x,int y)
-    {
-        return _field[x, y].floorNum;
-    }
-
-    public bool IsFieldPassable(Vector2Int pos)
-    {
-        return IsFieldPassable(pos.x, pos.y);
-    }
-    public bool IsFieldPassable(int x, int y)
-    {
-        if(FieldIndexCheck(x,y))
-        return _field[x, y].isUnlock && _field[x, y].isPassable;
-        return false;
-    }
-    //フィールドを広げる
-    void FieldEnlarge(int r)
-    {
-        for (int i = 0; i < _width; i++)
-        {
-            for (int j = 0; j < _height; j++)
-            {
-                if (new Vector2Int(_width / 2 - i, _height / 2 - j).magnitude < r)
-                    _field[i, j].isUnlock = true;
-                else _field[i, j].isUnlock = false;
-            }
-        }
-    }
-
-   
-    #region  旧プレイヤー関係
+*/
 #if false
     Vector2Int PlayerMove(Vector2Int pos, Vector2Int move)
     {
@@ -482,89 +557,119 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
     }
 #endif
 
-    #endregion
+#endregion
+#region 未分類
 
-    
-    //trueなら大丈夫 falseならはみ出し
-    public bool FieldIndexCheck(Vector2Int pos, Vector2Int move)
+//public void UpdateAnimationTime(float time)
+//{
+//_player._animationTime = time;
+//}
+//public void PlayerMoveWithAnimation()
+//{
+//_player.PlayerMoveAnimation(ref _playerMoveDirection, ref _playerMoveBuffer);
+// }
+
+#if false
+/// <summary>
+/// 初期化時に通行可能ブロックを作る
+/// </summary>
+    public void DigoutBlock(Vector2Int pos, Vector2Int aim,Vector2Int first,int num)
     {
-        Vector2Int ind = pos + move;
-        if (ind.x < 0 || ind.x >= _field.GetLength(0))
+        Vector2Int direction = new Vector2Int(0,0);
+        if (aim.x != pos.x)
         {
-            return false;
+            direction.x = (int) Mathf.Sign(aim.x - pos.x);
         }
-        if (ind.y < 0 || ind.y >= _field.GetLength(1))
+        else if (aim.y!=pos.y)
         {
-            return false;
+            direction.y = (int)Mathf.Sign(aim.y- pos.y);
         }
-        return true;
-    }
-    public bool FieldIndexCheck(int x,int y)
-    {
-        if (x < 0 || x >= _field.GetLength(0))
-        {
-            return false;
-        }
-        if (y < 0 || y >= _field.GetLength(1))
-        {
-            return false;
-        }
-        return true;
-    }
-   
-	// Use this for initialization
-    void Start()
-    {
-        EventManager.OnTouchGesture.AddListener(GetTouchGesture);
         
-    }
-
-    void DebugField()
-    {
-        for (int j = 0; j < _height; j++)
+        if (direction.magnitude > 0 && FieldIndexCheck(pos, direction)&&!IsFieldPassableSurround(pos))
         {
-            string s = "";
-            for (int i = 0; i < _width; i++)
+            DigoutBlock(pos+direction, aim,first,num);
+        }
+        else
+        {
+            if (num > 0)
             {
-                if (_player.pos == new Vector2Int(i, j))
-                {
-                    s += "v";
-                }
-                else
-                {
-                    switch (_field[i, j].isUnlock && _field[i, j].isPassable)
-                    {
-                        case true:
-                            s += "  ";
-                            break;
-                        case false:
-                            s += "[]";
-                            break;
-                        //case 20:
-                        //  s += "v";
-                        //  break;
-                    }
-                }
+                if(num!=1)DigoutBlock(pos + direction, new Vector2Int(Random.Range(0, _width), Random.Range(0, _height)),first, num-1);
+                else DigoutBlock(pos + direction, first,first, num - 1);
 
             }
-
-            s += "/";
-            DisplayLog.Log(s);
         }
-       
+        _field[pos.x, pos.y].isPassable = true;
+        _field[pos.x, pos.y].isUnlock = true;
     }
-	// Update is called once per frame
-	void Update ()
-	{
-	    if (Time.frameCount % 300 == 0)
-	    {
-	        _unlockRange++;
-            FieldEnlarge(_unlockRange);
-	        OnChangeField.Invoke();
-        }
-	    if(Random.Range(0,100) == 0)FeedSpawner();
+#endif
+/*  public Vector2Int PlayerPosition()
+  {
+      return _player.pos;
+  }*/
+/*
+void GetTouchGesture(int i,TouchGesture gesture)
+{
+    if (i == 0)
+    {
+        //NonAnimated
+        //PlayerMove(gesture);
 
-        // DebugField();
-	    _player.PlayerMove(ref _playerMoveDirection,ref _playerMoveBuffer);
-	}
+        //Animated
+        //if (AnimationStartRequest())
+        //{
+        //   PlayerMoveAnimated(gesture);
+        //}
+
+        //Normal
+        if (gesture != TouchGesture.None) {
+            if (_playerMoveDirection == TouchGesture.None)
+            {//最初だけ
+                _playerMoveDirection = gesture;
+            }
+
+            //if (_playerMoveBuffer == TouchGesture.None)
+            {//次に行く方向
+                _playerMoveBuffer = gesture;
+            }
+        }
+//			PlayerMoveCanCurve(gesture);
+    }
+}*/
+/*
+void DebugField()
+{
+    for (int j = 0; j < _height; j++)
+    {
+        string s = "";
+        for (int i = 0; i < _width; i++)
+        {
+            if (_player.pos == new Vector2Int(i, j))
+            {
+                s += "v";
+            }
+            else
+            {
+                switch (_field[i, j].isUnlock && _field[i, j].isPassable)
+                {
+                    case true:
+                        s += "  ";
+                        break;
+                    case false:
+                        s += "[]";
+                        break;
+                    //case 20:
+                    //  s += "v";
+                    //  break;
+                }
+            }
+
+        }
+
+        s += "/";
+        DisplayLog.Log(s);
+    }
+
 }
+*/
+#endregion
+#endregion
