@@ -2,16 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CameraMover : MonoBehaviour
-{
-    public Camera cam;
+public class RandomGrave : MonoBehaviour {
+
 	// Use this for initialization
 	void Start () {
-		
+		gameObject.SetActive(Random.Range(0,5) == 0);
+        
 	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+
 }
