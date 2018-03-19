@@ -6,7 +6,7 @@ public class EnemyManagerBase : CharacterOnField
 {
     private MoveDirection _moveDirection;
     private MoveDirection _moveBuffer;
-    private float speed = 0.03f;
+    private float speed = 0.05f;
 
     //さっき向き変更した
     private bool _changeDirNow = false;

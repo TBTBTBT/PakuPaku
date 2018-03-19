@@ -34,6 +34,8 @@ public class PlayerManager : CharacterOnField
 
     void Start () {
 	    EventManager.OnTouchGesture.AddListener(GetTouchGesture);
+		GameManager game = GameManager.Instance;
+		game.OnPushDig.AddListener (Dig);
     }
 
     #region 入力
@@ -94,7 +96,10 @@ public class PlayerManager : CharacterOnField
 
         return moveDir;
     }
-
+	bool DigCheck(){
+		GameManager game = GameManager.Instance;
+		return game.IsDug (transform.position);
+	}
     void Move()
     {
         GameManager game = GameManager.Instance;
@@ -120,11 +125,19 @@ public class PlayerManager : CharacterOnField
         Gravitation(left, up, right, down, pos, 0.15f);
     }
 #endregion
+	public void Dig(){
+		GameManager game = GameManager.Instance;
+		game.Dig (transform.position);
 
+	}
     void Update () {
         
 
         Move();
+		if (DigCheck ()) {
+			//Destroy (gameObject);
+			isArrive = false;
+		}
 
     }
  

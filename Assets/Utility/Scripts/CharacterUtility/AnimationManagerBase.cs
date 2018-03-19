@@ -15,8 +15,12 @@ public class AnimationManagerBase : MonoBehaviour
     //{
     //    _anim.SetTrigger(state);
     //}
-    void Start()
+
+
+    virtual protected void Start()
     {
+
+		//キャラクターからデータをもらう
         if (_animateChara)
         {
             _animateChara.OnChangeState.AddListener(ChangeState);

@@ -2,22 +2,37 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FieldSpriteManager : MonoBehaviour
+public class FieldSpriteManager : AnimationManagerBase
 {
     public GameObject[] _walls;
-    public Animator _road;
-	// Use this for initialization
-	void Start () {
-		
+    //public Animator _road;
+
+	/// <summary>
+	/// ステート一覧の初期化
+	/// </summary>
+	void SetStates()
+	{
+		_states = new []
+		{
+			"Fill",
+			"Dug"
+		};
 	}
 
+	void Start(){
+		base.Start ();
+		SetStates ();
+	}
 
-    public void ChangeRoadState(int state)
-    {
-        //_road .SetActive(true);
-
-    }
-    public void ChangeBlockState(bool my,bool left,bool up,bool right,bool down)
+	public void ChangeBlockDigState(bool isDug){
+		if (isDug) {
+			ChangeState (1);
+		}
+		if (!isDug) {
+			ChangeState (0);
+		}
+	}
+    public void ChangeBlockPassableState(bool my,bool left,bool up,bool right,bool down)
     {
         if (my && _walls.Length>4)
         {

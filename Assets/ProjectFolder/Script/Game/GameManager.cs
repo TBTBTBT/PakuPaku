@@ -18,6 +18,7 @@ public class FieldInfo
     //public int objectNum;//存在するオブジェクト 
     public bool isPassable = false; // 通れるかかどうか
     public bool isUnlock = false;
+	public bool isDug = false;
 }
 /// <summary>
 /// フィールドに存在するオブジェクトのベースクラス
@@ -46,6 +47,8 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 
     [System.NonSerialized]
     public UnityEvent OnChangeField = new UnityEvent();
+	[System.NonSerialized]
+	public UnityEvent OnPushDig= new UnityEvent();
 
     public GameObject _playerPrefab;
 
@@ -61,7 +64,16 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
         FieldInit();
         PlayerInit();
     }
-
+	public void PushDigButton(){
+		OnPushDig.Invoke ();
+		OnChangeField.Invoke();
+	}
+	public bool IsDug(Vector2 pos){
+		return IsDug (PositionToIndex (pos));
+	}
+	public bool IsDug(Vector2Int pos){
+		return _field [pos.x, pos.y].isDug;
+	}
     /// <summary>
     /// フィールドの初期化
     /// </summary>
@@ -105,7 +117,9 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
         FieldEnlarge(2);
         //_player.pos = new Vector2Int(_width / 2,_height/2 + 1);
     }
-
+	public FieldInfo Field(int x,int y){
+		return _field [x, y];
+	}
     void PlayerInit()
     {
         GameObject.Instantiate(_playerPrefab, IndexToPosition(new Vector2Int(_width / 2,_height/2+1)), Quaternion.identity);
@@ -267,6 +281,16 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
         return true;
     }
 #endregion
+	public void Dig(Vector2 pos) {
+		Dig (PositionToIndex (pos));
+	}
+	public void Dig(Vector2Int pos){
+		if (FieldIndexCheck(pos.x,pos.y)) {
+			if (IsFieldPassable (pos)) {
+				_field [pos.x, pos.y].isDug = true;
+			}
+		}
+	}
     // Use this for initialization
     void Start()
     {

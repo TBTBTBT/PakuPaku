@@ -44,7 +44,7 @@ public class GameViewManager : SingletonMonoBehaviourCanDestroy<GameViewManager>
                 bool up    = game.IsFieldPassable(i, j - 1);
                 bool right = game.IsFieldPassable(i + 1, j);
                 bool down  = game.IsFieldPassable(i, j + 1);
-                _fieldObj[i, j].GetComponent<FieldSpriteManager>().ChangeBlockState(my,left,up,right,down);
+                _fieldObj[i, j].GetComponent<FieldSpriteManager>().ChangeBlockPassableState(my,left,up,right,down);
                 /*switch(game.FieldState(i, j))
                 {
                     case 10:
@@ -85,7 +85,9 @@ public class GameViewManager : SingletonMonoBehaviourCanDestroy<GameViewManager>
                 bool up = game.IsFieldPassable(i, j - 1);
                 bool right = game.IsFieldPassable(i + 1, j);
                 bool down = game.IsFieldPassable(i, j + 1);
-                _fieldObj[i, j].GetComponent<FieldSpriteManager>().ChangeBlockState(my, left, up, right, down);
+                _fieldObj[i, j].GetComponent<FieldSpriteManager>().ChangeBlockPassableState(my, left, up, right, down);
+				FieldInfo state = game.Field (i, j);
+				_fieldObj[i, j].GetComponent<FieldSpriteManager>().ChangeBlockDigState(state.isDug);
                 /*switch(game.FieldState(i, j))
                 {
                     case 10:

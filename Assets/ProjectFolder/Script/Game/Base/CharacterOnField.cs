@@ -9,6 +9,8 @@ using UnityEngine;
 public class CharacterOnField : CharacterBase
 {
 
+	protected bool isArrive = true;
+
     //touchGestureと互換性がある
     public enum MoveDirection
     {
