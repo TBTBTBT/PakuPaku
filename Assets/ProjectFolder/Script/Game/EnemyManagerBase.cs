@@ -128,13 +128,23 @@ public class EnemyManagerBase : CharacterOnField
     void Start () {
 		
 	}
-	
-	// Update is called once per frame
-	void Update ()
+
+    bool DigCheck()
+    {
+        GameManager game = GameManager.Instance;
+        return game.IsDug(transform.position);
+    }
+    // Update is called once per frame
+    void Update ()
 	{
 	    AI();
         Move();
-
+	    if (DigCheck())
+	    {
+	        GameManager game = GameManager.Instance;
+            game.GraveStamp(transform.position);
+            Destroy(gameObject);
+	    }
 
 	}
 }

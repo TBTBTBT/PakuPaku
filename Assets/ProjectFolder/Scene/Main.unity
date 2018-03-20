@@ -581,6 +581,10 @@ Prefab:
       propertyPath: m_RootOrder
       value: 7
       objectReference: {fileID: 0}
+    - target: {fileID: 1446537845246312, guid: 54d2410bde85e0e4aa10b56725a8a9c5, type: 2}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 54d2410bde85e0e4aa10b56725a8a9c5, type: 2}
   m_IsPrefabParent: 0
@@ -1053,6 +1057,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _playerPrefab: {fileID: 1580425545859352, guid: 6f4d16120113442fa9faf54a57aba639,
+    type: 2}
+  _enemyPrefab: {fileID: 1446537845246312, guid: 54d2410bde85e0e4aa10b56725a8a9c5,
     type: 2}
 --- !u!4 &1777347927
 Transform:

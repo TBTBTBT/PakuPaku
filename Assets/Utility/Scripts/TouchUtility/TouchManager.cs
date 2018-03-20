@@ -65,6 +65,8 @@ public class TouchManager : SingletonMonoBehaviour<TouchManager> {
             }
             else touchPosBefore = TouchInput.GetTouchPosition(num);
             touchPosCurrent = TouchInput.GetTouchPosition(num);
+            TouchGesture gesture = PositionToGesture((Vector2)touchPosAnchor, (Vector2)touchPosCurrent);
+            EventManager.Invoke(ref EventManager.OnTouchGestureMove, num, gesture);
         }
     }
     /// <summary>
@@ -113,7 +115,7 @@ public class TouchManager : SingletonMonoBehaviour<TouchManager> {
         if (num == 0)
         {
             TouchGesture gesture = PositionToGesture((Vector2)touchPosAnchor, (Vector2)touchPosCurrent);
-            EventManager.Invoke(ref EventManager.OnTouchGesture,num,gesture);
+            EventManager.Invoke(ref EventManager.OnTouchGestureEnd,num,gesture);
             touchPosBefore = null;
             touchPosCurrent = null;
             touchPosAnchor = null;

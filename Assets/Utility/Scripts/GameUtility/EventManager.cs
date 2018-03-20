@@ -12,8 +12,8 @@ public class EventManager : MonoBehaviour {
 	static public UnityEvent<int> OnTouchBegin = new UnityEventArg<int>();
 	static public UnityEvent<int> OnTouchMove = new UnityEventArg<int>();
     static public UnityEvent<int> OnTouchEnd = new UnityEventArg<int>();
-    static public UnityEvent<int,TouchGesture> OnTouchGesture = new UnityEventArg<int,TouchGesture>();
-
+    static public UnityEvent<int,TouchGesture> OnTouchGestureEnd = new UnityEventArg<int,TouchGesture>();
+    static public UnityEvent<int, TouchGesture> OnTouchGestureMove = new UnityEventArg<int, TouchGesture>();
     #endregion
 
     #region Methods

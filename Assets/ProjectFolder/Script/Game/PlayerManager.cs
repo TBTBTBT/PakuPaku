@@ -11,7 +11,7 @@ public class PlayerManager : CharacterOnField
 
     #region パラメーター
 
-    float speed = 0.035f;//いどうそくど
+    float speed = 0.055f;//いどうそくど
 
     #endregion
 
@@ -33,7 +33,7 @@ public class PlayerManager : CharacterOnField
     }
 
     void Start () {
-	    EventManager.OnTouchGesture.AddListener(GetTouchGesture);
+	    EventManager.OnTouchGestureMove.AddListener(GetTouchGesture);
 		GameManager game = GameManager.Instance;
 		game.OnPushDig.AddListener (Dig);
     }
@@ -47,7 +47,8 @@ public class PlayerManager : CharacterOnField
             //
             //_moveDirection = gesture;
 
-
+            ChangeDirection((MoveDirection)gesture);
+            /*
             //Normal
             if (gesture != TouchGesture.None)
             {
@@ -67,7 +68,7 @@ public class PlayerManager : CharacterOnField
                 ChangeDirection((MoveDirection)gesture);
                 _moveDirection = gesture;
                 _moveBuffer = gesture;
-            }
+            }*/
         }
     }
 
@@ -103,22 +104,25 @@ public class PlayerManager : CharacterOnField
     void Move()
     {
         GameManager game = GameManager.Instance;
+        Vector2 dir = TouchManager.Instance.GetTouchDistance();
 
+        /*
         Vector2Int dir = GestureToDir(_moveDirection);
         Vector2Int buf = GestureToDir(_moveBuffer);
-
+        */
         Vector2Int pos = game.PositionToIndex(transform.position);
         bool left = game.IsFieldPassable(pos + new Vector2Int(-1, 0));
         bool up = game.IsFieldPassable(pos + new Vector2Int(0, -1));
         bool right = game.IsFieldPassable(pos + new Vector2Int(1, 0));
         bool down = game.IsFieldPassable(pos + new Vector2Int(0, 1));
+        /*
         if (CanMove(left, up, right, down, buf))
         {
             dir = buf;
             _moveDirection = _moveBuffer;
             ChangeDirection((MoveDirection)_moveBuffer);
-        }
-        transform.position += (Vector3)(Vector2)dir * speed;
+        }*/
+        transform.position += (Vector3)(Vector2)dir.normalized * speed;
         //        Debug.Log(pos);
 
 
@@ -128,6 +132,7 @@ public class PlayerManager : CharacterOnField
 	public void Dig(){
 		GameManager game = GameManager.Instance;
 		game.Dig (transform.position);
+        //game.GraveStamp(transform.position);
 
 	}
     void Update () {

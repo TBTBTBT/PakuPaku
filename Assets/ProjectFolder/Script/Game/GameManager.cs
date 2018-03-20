@@ -51,10 +51,14 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 	public UnityEvent OnPushDig= new UnityEvent();
 
     public GameObject _playerPrefab;
-
+    public GameObject _enemyPrefab;
     private int _unlockRange = 2;
     //今アニメーション中か
+    void SpawnEnemy()
+    {
+        GameObject.Instantiate(_enemyPrefab, IndexToPosition(new Vector2Int(_width / 2, _height / 2 + 1)), Quaternion.identity);
 
+    }
 
     void Awake()
     {
@@ -74,6 +78,37 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 	public bool IsDug(Vector2Int pos){
 		return _field [pos.x, pos.y].isDug;
 	}
+    public void GraveStamp(Vector2 pos) {
+        GraveStamp(PositionToIndex (pos));
+    }
+    public void GraveStamp(Vector2Int pos)
+    {
+        for(int i = -1;i < 2;i++)
+        {
+            for (int j = -1; j < 2; j++)
+            {
+                if ( FieldIndexCheck(pos, new Vector2Int(i, j)))
+                {
+
+
+                    if (i != 0 || j != 0)
+                    {
+                        _field[pos.x + i, pos.y + j].isPassable = true;
+                        _field[pos.x + i, pos.y + j].isUnlock = true;
+                        
+                    }
+
+                    if (i == 0 && j == 0)
+                    {
+                        _field[pos.x + i, pos.y + j].isPassable = false;
+                        _field[pos.x + i, pos.y + j].isUnlock = false;
+                        _field[pos.x + i, pos.y + j].isDug = false;
+                    }
+                }
+            }
+        }
+        OnChangeField.Invoke();
+    }
     /// <summary>
     /// フィールドの初期化
     /// </summary>
@@ -303,9 +338,10 @@ public class GameManager : SingletonMonoBehaviourCanDestroy<GameManager>
 	    if (Time.frameCount % 300 == 0)
 	    {
 	        _unlockRange++;
-            FieldEnlarge(_unlockRange);
+            //FieldEnlarge(_unlockRange);
 	        OnChangeField.Invoke();
-        }
+	        SpawnEnemy();
+	    }
 	    //if(Random.Range(0,100) == 0)FeedSpawner();
 
         // DebugField();
